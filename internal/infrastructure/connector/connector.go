@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/domain/connection"
+	"github.com/mbobrovskyi/ddd-chat-management-go/internal/chat/domain/connection"
 	"github.com/mbobrovskyi/ddd-chat-management-go/internal/infrastructure/logger"
 	"sync"
 	"time"
@@ -23,7 +23,7 @@ type connector struct {
 	log           logger.Logger
 	connections   []connection.Connection
 	isStarted     bool
-	eventHandler  connection.EventHandler
+	eventHandler  EventHandler
 	cleanInterval time.Duration
 }
 
@@ -111,39 +111,11 @@ func (c *connector) onMessage(conn connection.Connection, data []byte) {
 
 	c.log.Debugf("Got new event event_type=%d message=%s", rawEvent.GetType(), string(rawEvent.GetData()))
 
-	if err := c.eventHandler.HandleEvent(conn, rawEvent); err != nil {
+	if err := c.eventHandler.Handle(conn, rawEvent); err != nil {
 		c.log.Error(err)
 	}
 }
 
 func (c *connector) GetConnections() []connection.Connection {
 	return c.connections
-}
-
-type Config struct {
-	CleanInterval time.Duration
-	Logger        logger.Logger
-}
-
-func NewConnector(
-	eventHandler connection.EventHandler,
-	configs ...Config,
-) *connector {
-	conn := &connector{
-		log:           logger.NewNopLogger(),
-		eventHandler:  eventHandler,
-		cleanInterval: time.Minute,
-	}
-
-	for _, config := range configs {
-		if config.CleanInterval > 0 {
-			conn.cleanInterval = config.CleanInterval
-		}
-
-		if config.Logger != nil {
-			conn.log = config.Logger
-		}
-	}
-
-	return conn
 }

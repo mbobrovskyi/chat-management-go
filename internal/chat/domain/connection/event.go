@@ -6,7 +6,7 @@ import (
 )
 
 type Event interface {
-	value_object.ValueObject[Event]
+	value_object.ValueObject[*event]
 
 	GetType() uint8
 	GetData() json.RawMessage
@@ -17,7 +17,7 @@ type event struct {
 	Data json.RawMessage
 }
 
-func (e *event) Equals(other Event) bool {
+func (e *event) Equals(other *event) bool {
 	if other == nil {
 		return false
 	}
@@ -25,7 +25,7 @@ func (e *event) Equals(other Event) bool {
 	data, _ := e.GetData().MarshalJSON()
 	dataOther, _ := other.GetData().MarshalJSON()
 
-	return e.GetType() == other.GetType() && string(data) == string(dataOther)
+	return e.Type == other.GetType() && string(data) == string(dataOther)
 }
 
 func (e *event) GetType() uint8 {

@@ -1,7 +1,7 @@
 package session
 
-import "github.com/mbobrovskyi/ddd-chat-management-go/internal/common/domain/user"
+import "github.com/mbobrovskyi/ddd-chat-management-go/internal/common/domain/entity"
 
 type Session interface {
-	GetUser() user.User
+	entity.Entity[Session]
 }
