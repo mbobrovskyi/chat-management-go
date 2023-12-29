@@ -2,7 +2,6 @@ package repositories
 
 import (
 	"context"
-	"github.com/mbobrovskyi/chat-management-go/internal/chat/domain"
 	"github.com/mbobrovskyi/chat-management-go/internal/chat/domain/chat"
 	"github.com/samber/lo"
 	"time"
@@ -51,7 +50,7 @@ func (r *ChatRepository) Delete(ctx context.Context, id uint64) error {
 	return nil
 }
 
-func NewChatRepository() domain.ChatRepository {
+func NewChatRepository() chat.Repository {
 	chats := make([]chat.Chat, 0)
 	chats = append(chats, chat.Create(1, "Chat 1", chat.Direct, "", nil, 1, time.Now(), time.Now()))
 

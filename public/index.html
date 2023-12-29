@@ -9,13 +9,18 @@
     </div>
 </div>
 <script type="application/javascript">
-    const message = document.getElementById("message");
-    const send = document.getElementById("send");
+    const messageEl = document.getElementById("message");
+    const sendEl = document.getElementById("send");
 
-    const url = "ws://127.0.0.1:8080/chats/ws";
+    const token = "WGdb3O8j0mBxg24vaT9AnDMnn2aTel29BlhrTtPNozhKUkz3BnIEgvMIfcIZ66N5";
+    const url = `ws://127.0.0.1:8081/chats/ws?token=${token}`;
+
     const socket = new WebSocket(url);
+
     socket.onopen = function(e) {
         console.log("WebSocket opened");
+
+        socket.send(JSON.stringify({ type: 3, data: 1 }));
     };
 
     socket.onclose = function (e) {
@@ -26,10 +31,8 @@
         console.log("New message:", e.data);
     };
 
-    send.onclick = function () {
-        const json = JSON.stringify({ type: 5, data: { text: message.value } })
-        console.log(json);
-        socket.send(json);
+    sendEl.onclick = function () {
+        socket.send(JSON.stringify({ type: 5, data: { text: messageEl.value } }));
     };
 </script>
 </body>

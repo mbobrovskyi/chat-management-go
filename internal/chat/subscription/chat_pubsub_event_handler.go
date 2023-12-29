@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"github.com/mbobrovskyi/chat-management-go/internal/chat/common"
 	"github.com/mbobrovskyi/chat-management-go/internal/chat/domain"
+	"github.com/mbobrovskyi/chat-management-go/internal/chat/domain/message"
 	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/connector"
 	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/subscriber"
 )
 
 type ChatPubSubHandler struct {
-	messageService domain.MessageService
+	messageService message.Service
 	chatConnector  connector.Connector
 }
 
@@ -42,7 +43,7 @@ func (c *ChatPubSubHandler) createMessage(data []byte) error {
 }
 
 func NewChatSubscriberHandler(
-	messageService domain.MessageService,
+	messageService message.Service,
 	chatConnector connector.Connector,
 ) subscriber.EventHandler {
 	return &ChatPubSubHandler{

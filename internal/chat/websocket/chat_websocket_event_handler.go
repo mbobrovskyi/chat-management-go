@@ -13,7 +13,7 @@ import (
 var InvalidConnectionType = errors.New("invalid connection type")
 
 type ChatWebsocketEventHandler struct {
-	messageService domain.MessageService
+	messageService message.Service
 }
 
 func (h *ChatWebsocketEventHandler) Handle(baseConn connection.Connection, eventType uint8, data []byte) error {
@@ -43,28 +43,53 @@ func (h *ChatWebsocketEventHandler) Handle(baseConn connection.Connection, event
 }
 
 func (h *ChatWebsocketEventHandler) subscribeChat(conn connection.Connection, rawData []byte) error {
-	return nil
-}
+	var chatIds []uint64
 
-func (h *ChatWebsocketEventHandler) unsubscribeRoom(conn connection.Connection, rawData []byte) error {
-	return nil
-}
-
-func (h *ChatWebsocketEventHandler) setCurrentChat(conn connection.Connection, rawData []byte) error {
-	return nil
-}
-
-func (h *ChatWebsocketEventHandler) unsetCurrentChat(conn connection.Connection, rawData []byte) error {
-	return nil
-}
-
-func (h *ChatWebsocketEventHandler) createMessage(conn connection.Connection, rawData []byte) error {
-	dto := MessageDTO{}
-	if err := json.Unmarshal(rawData, &dto); err != nil {
+	if err := json.Unmarshal(rawData, &chatIds); err != nil {
 		return err
 	}
 
-	msg := message.CreateNew(dto.Text, 1, 1)
+	// TODO: Check chat ids on service is exist
+	conn.GetMetadata()["currentChatIds"] = chatIds
+
+	return nil
+}
+
+func (h *ChatWebsocketEventHandler) unsubscribeRoom(conn connection.Connection, _ []byte) error {
+	delete(conn.GetMetadata(), "currentChatIds")
+	return nil
+}
+
+func (h *ChatWebsocketEventHandler) setCurrentChat(conn connection.Connection, data []byte) error {
+	var chatId uint64
+
+	if err := json.Unmarshal(data, &chatId); err != nil {
+		return err
+	}
+
+	// TODO: Check chat id on service is exist
+	conn.GetMetadata()["currentChatId"] = chatId
+
+	return nil
+}
+
+func (h *ChatWebsocketEventHandler) unsetCurrentChat(conn connection.Connection, _ []byte) error {
+	delete(conn.GetMetadata(), "currentChatId")
+	return nil
+}
+
+func (h *ChatWebsocketEventHandler) createMessage(conn connection.Connection, data []byte) error {
+	request := MessageRequest{}
+	if err := json.Unmarshal(data, &request); err != nil {
+		return err
+	}
+
+	currentChatId, ok := conn.GetMetadata()["currentChatId"]
+	if !ok {
+		return nil
+	}
+
+	msg := message.CreateNew(request.Text, currentChatId.(uint64), conn.GetSession().GetUser().GetId())
 
 	if err := h.messageService.CreateMessage(context.Background(), msg); err != nil {
 		return err
@@ -73,10 +98,10 @@ func (h *ChatWebsocketEventHandler) createMessage(conn connection.Connection, ra
 	return nil
 }
 
-func (h *ChatWebsocketEventHandler) updateMessagesStatus(conn connection.Connection, rawData []byte) error {
+func (h *ChatWebsocketEventHandler) updateMessagesStatus(conn connection.Connection, data []byte) error {
 	return nil
 }
 
-func NewMessageEventHandler(messageService domain.MessageService) connector.EventHandler {
+func NewMessageEventHandler(messageService message.Service) connector.EventHandler {
 	return &ChatWebsocketEventHandler{messageService: messageService}
 }

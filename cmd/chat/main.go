@@ -5,6 +5,8 @@ import (
 	"fmt"
 	chatapplication "github.com/mbobrovskyi/chat-management-go/internal/chat/api"
 	chatdomain "github.com/mbobrovskyi/chat-management-go/internal/chat/domain"
+	"github.com/mbobrovskyi/chat-management-go/internal/chat/domain/chat"
+	"github.com/mbobrovskyi/chat-management-go/internal/chat/domain/message"
 	"github.com/mbobrovskyi/chat-management-go/internal/chat/repositories"
 	chatpubsub "github.com/mbobrovskyi/chat-management-go/internal/chat/subscription"
 	"github.com/mbobrovskyi/chat-management-go/internal/chat/websocket"
@@ -59,8 +61,8 @@ func main() {
 	chatRepository := repositories.NewChatRepository()
 	messageRepository := repositories.NewMessageRepository()
 
-	chatService := chatdomain.NewService(chatRepository)
-	messageService := chatdomain.NewMessageService(messageRepository, chatPublisher)
+	chatService := chat.NewService(chatRepository)
+	messageService := message.NewMessageService(messageRepository, chatPublisher)
 
 	chatEventHandler := websocket.NewMessageEventHandler(messageService)
 	chatConnector := connector.NewConnector(chatEventHandler, connector.Config{Logger: log})

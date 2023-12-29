@@ -4,22 +4,17 @@ import (
 	"fmt"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
-	"github.com/mbobrovskyi/chat-management-go/internal/chat/domain"
 	"github.com/mbobrovskyi/chat-management-go/internal/chat/domain/chat"
 	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/connection"
 	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/connector"
 	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/session"
-	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/user"
 	"github.com/mbobrovskyi/chat-management-go/internal/infrastructure/server"
 	"github.com/samber/lo"
-	"time"
 )
-
-var _ server.Controller = (*ChatController)(nil)
 
 type ChatController struct {
 	authMiddleware server.Middleware
-	chatService    domain.ChatService
+	chatService    chat.Service
 	chatConnector  connector.Connector
 }
 
@@ -35,9 +30,9 @@ func (c *ChatController) SetupRoutes(router fiber.Router) {
 }
 
 func (c *ChatController) ws(ctx *fiber.Ctx) error {
-	currentSession := session.NewSession(user.NewUser(1, "test@test.com", "Test", "Test", time.Now(), time.Now()))
+	userSession := ctx.Context().UserValue("session").(session.Session)
 	return websocket.New(func(conn *websocket.Conn) {
-		websocketConnection := connection.NewConnection(conn, currentSession)
+		websocketConnection := connection.NewConnection(conn, userSession)
 		c.chatConnector.AddConnection(ctx.Context(), websocketConnection)
 		<-websocketConnection.GetCloseChan()
 		fmt.Println("Connection closed on controller")
@@ -76,7 +71,7 @@ func (c *ChatController) deleteChat(ctx *fiber.Ctx) error {
 
 func NewChatController(
 	authMiddleware server.Middleware,
-	chatService domain.ChatService,
+	chatService chat.Service,
 	chatConnector connector.Connector,
 ) server.Controller {
 	return &ChatController{

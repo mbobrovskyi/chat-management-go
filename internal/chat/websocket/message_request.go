@@ -1,5 +1,5 @@
 package websocket
 
-type MessageDTO struct {
+type MessageRequest struct {
 	Text string `json:"text"`
 }
