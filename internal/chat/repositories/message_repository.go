@@ -1,6 +1,6 @@
 package repositories
 
-import "github.com/mbobrovskyi/ddd-chat-management-go/internal/chat/domain"
+import "github.com/mbobrovskyi/chat-management-go/internal/chat/domain"
 
 var _ domain.MessageRepository = (*MessageRepository)(nil)
 

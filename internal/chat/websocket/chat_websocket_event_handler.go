@@ -4,11 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/chat/domain"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/chat/domain/message"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/common/domain/connection"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/common/domain/connector"
+	"github.com/mbobrovskyi/chat-management-go/internal/chat/domain"
+	"github.com/mbobrovskyi/chat-management-go/internal/chat/domain/message"
+	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/connection"
+	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/connector"
 )
 
 var InvalidConnectionType = errors.New("invalid connection type")
@@ -22,8 +21,6 @@ func (h *ChatWebsocketEventHandler) Handle(baseConn connection.Connection, event
 	if !ok {
 		return InvalidConnectionType
 	}
-
-	fmt.Println("Handle:", eventType, string(data))
 
 	switch eventType {
 	case domain.SubscribeChatsWebsocketEventType:

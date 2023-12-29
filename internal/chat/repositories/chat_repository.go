@@ -2,8 +2,8 @@ package repositories
 
 import (
 	"context"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/chat/domain"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/chat/domain/chat"
+	"github.com/mbobrovskyi/chat-management-go/internal/chat/domain"
+	"github.com/mbobrovskyi/chat-management-go/internal/chat/domain/chat"
 	"github.com/samber/lo"
 	"time"
 )

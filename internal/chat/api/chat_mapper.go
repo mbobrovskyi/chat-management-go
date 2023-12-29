@@ -1,7 +1,7 @@
 package api
 
 import (
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/chat/domain/chat"
+	"github.com/mbobrovskyi/chat-management-go/internal/chat/domain/chat"
 )
 
 func ChatToResponse(chat chat.Chat) ChatResponse {

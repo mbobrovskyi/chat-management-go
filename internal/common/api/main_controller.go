@@ -1,8 +1,8 @@
-package application
+package api
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/infrastructure/server"
+	"github.com/mbobrovskyi/chat-management-go/internal/infrastructure/server"
 )
 
 var _ server.Controller = (*MainController)(nil)

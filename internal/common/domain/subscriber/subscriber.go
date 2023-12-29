@@ -1,10 +1,10 @@
-package pubsub
+package subscriber
 
 import (
 	"context"
 	"errors"
-	"fmt"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/infrastructure/logger"
+	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/common"
+	"github.com/mbobrovskyi/chat-management-go/internal/infrastructure/logger"
 	"github.com/redis/go-redis/v9"
 	"github.com/samber/lo"
 	"strconv"
@@ -14,7 +14,7 @@ import (
 var InvalidChannelError = errors.New("invalid channel")
 
 type Subscriber interface {
-	Subscribe(ctx context.Context, eventTypes []uint8) error
+	Start(ctx context.Context, eventTypes []uint8) error
 }
 
 type subscriber struct {
@@ -24,8 +24,8 @@ type subscriber struct {
 	eventHandler EventHandler
 }
 
-func (ps *subscriber) getEventType(channel string) (uint8, error) {
-	parts := strings.Split(channel, ps.prefix)
+func (s *subscriber) getEventType(channel string) (uint8, error) {
+	parts := strings.Split(channel, s.prefix)
 	if len(parts) < 1 {
 		return 0, InvalidChannelError
 	}
@@ -38,29 +38,26 @@ func (ps *subscriber) getEventType(channel string) (uint8, error) {
 	return uint8(eventType), nil
 }
 
-func (ps *subscriber) Subscribe(ctx context.Context, eventTypes []uint8) error {
+func (s *subscriber) Start(ctx context.Context, eventTypes []uint8) error {
 	channels := lo.Map(eventTypes, func(eventType uint8, _ int) string {
-		return fmt.Sprintf("%s%d", ps.prefix, eventType)
+		return common.BuildChannelName(s.prefix, eventType)
 	})
 
-	pubsub := ps.rdb.Subscribe(ctx, channels...)
+	pubsub := s.rdb.Subscribe(ctx, channels...)
 	defer pubsub.Close()
 
-	for {
-		msg, err := pubsub.ReceiveMessage(ctx)
+	for msg := range pubsub.Channel() {
+		eventType, err := s.getEventType(msg.Channel)
 		if err != nil {
-			return fmt.Errorf("error on pubsub: %w", err)
+			s.log.Errorf("error on subscriber: %s", err.Error())
 		}
 
-		eventType, err := ps.getEventType(msg.Channel)
-		if err != nil {
-			ps.log.Errorf("error on pub/sub: %s", err.Error())
-		}
-
-		if err := ps.eventHandler.Handle(eventType, []byte(msg.Payload)); err != nil {
-			ps.log.Errorf("error on pub/sub: %s", err.Error())
+		if err := s.eventHandler.Handle(eventType, []byte(msg.Payload)); err != nil {
+			s.log.Errorf("error on subscriber: %s", err.Error())
 		}
 	}
+
+	return nil
 }
 
 func NewSubscriber(log logger.Logger, rdb *redis.Client, eventHandler EventHandler, prefix string) Subscriber {

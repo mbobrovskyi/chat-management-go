@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/chat/domain"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/chat/domain/chat"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/common/domain/connection"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/common/domain/connector"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/common/domain/session"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/common/domain/user"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/infrastructure/server"
+	"github.com/mbobrovskyi/chat-management-go/internal/chat/domain"
+	"github.com/mbobrovskyi/chat-management-go/internal/chat/domain/chat"
+	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/connection"
+	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/connector"
+	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/session"
+	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/user"
+	"github.com/mbobrovskyi/chat-management-go/internal/infrastructure/server"
 	"github.com/samber/lo"
 	"time"
 )
@@ -18,12 +18,13 @@ import (
 var _ server.Controller = (*ChatController)(nil)
 
 type ChatController struct {
-	chatService   domain.ChatService
-	chatConnector connector.Connector
+	authMiddleware server.Middleware
+	chatService    domain.ChatService
+	chatConnector  connector.Connector
 }
 
 func (c *ChatController) SetupRoutes(router fiber.Router) {
-	chatGroup := router.Group("/chats")
+	chatGroup := router.Group("/chats", c.authMiddleware.Handle)
 	chatGroup.All("/ws", c.ws)
 	chatGroup.Get("", c.getChats)
 	chatGroup.Get("/:id", c.getChat)
@@ -73,6 +74,14 @@ func (c *ChatController) deleteChat(ctx *fiber.Ctx) error {
 	return nil
 }
 
-func NewChatController(chatService domain.ChatService, chatConnector connector.Connector) server.Controller {
-	return &ChatController{chatService: chatService, chatConnector: chatConnector}
+func NewChatController(
+	authMiddleware server.Middleware,
+	chatService domain.ChatService,
+	chatConnector connector.Connector,
+) server.Controller {
+	return &ChatController{
+		authMiddleware: authMiddleware,
+		chatService:    chatService,
+		chatConnector:  chatConnector,
+	}
 }

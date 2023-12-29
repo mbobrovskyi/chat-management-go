@@ -2,7 +2,7 @@ package connection
 
 import (
 	"github.com/google/uuid"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/common/domain/session"
+	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/session"
 )
 
 type Conn interface {

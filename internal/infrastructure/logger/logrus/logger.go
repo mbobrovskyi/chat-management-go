@@ -1,7 +1,7 @@
 package logrus
 
 import (
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/infrastructure/logger"
+	"github.com/mbobrovskyi/chat-management-go/internal/infrastructure/logger"
 	"github.com/sirupsen/logrus"
 )
 

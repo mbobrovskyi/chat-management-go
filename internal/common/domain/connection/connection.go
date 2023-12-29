@@ -2,13 +2,10 @@ package connection
 
 import (
 	"encoding/json"
-	"errors"
 	"github.com/google/uuid"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/common/domain/event"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/common/domain/session"
+	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/event"
+	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/session"
 )
-
-var ClosedError = errors.New("connection closed")
 
 type Connection interface {
 	Equals(other Connection) bool
@@ -23,7 +20,7 @@ type Connection interface {
 	GetMessageChan() chan []byte
 	GetCloseChan() chan struct{}
 
-	SendMessage(eventType uint8, data any) error
+	SendEvent(eventType uint8, data any) error
 
 	Open()
 	Close()
@@ -75,9 +72,9 @@ func (c *connection) GetCloseChan() chan struct{} {
 	return c.closeChan
 }
 
-func (c *connection) SendMessage(eventType uint8, data any) error {
+func (c *connection) SendEvent(eventType uint8, data any) error {
 	if c.closed {
-		return ClosedError
+		return nil
 	}
 
 	jsonData, err := json.Marshal(data)

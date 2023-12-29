@@ -22,6 +22,6 @@ func (ms Status) IsValid() bool {
 	return slices.Contains(ms.Types(), ms)
 }
 
-func NewMessageStatus(messageStatus uint8) (Status, error) {
-	return Status(messageStatus), nil
+func NewMessageStatus(messageStatus uint8) Status {
+	return Status(messageStatus)
 }

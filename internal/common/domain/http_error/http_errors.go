@@ -1,11 +1,17 @@
 package http_error
 
-import "net/http"
+import (
+	"net/http"
+)
 
 func NewNotFoundError(message string) HttpError {
 	return NewHttpError("NotFoundError", message, http.StatusNotFound)
 }
 
-func NewPubSubError(message string) HttpError {
-	return NewHttpError("PubSubError", message, http.StatusInternalServerError)
+func NewUnauthorizedError(message string) HttpError {
+	return NewHttpError("UnauthorizedError", message, http.StatusUnauthorized)
+}
+
+func NewPublisherError(message string) HttpError {
+	return NewHttpError("PublisherError", message, http.StatusInternalServerError)
 }

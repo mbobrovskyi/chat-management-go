@@ -3,18 +3,20 @@ package main
 import (
 	"context"
 	"fmt"
-	chatapplication "github.com/mbobrovskyi/ddd-chat-management-go/internal/chat/api"
-	chatdomain "github.com/mbobrovskyi/ddd-chat-management-go/internal/chat/domain"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/chat/repositories"
-	chatpubsub "github.com/mbobrovskyi/ddd-chat-management-go/internal/chat/subscription"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/chat/websocket"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/common/application"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/common/domain/connector"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/common/domain/pubsub"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/infrastructure/configs"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/infrastructure/database/redis"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/infrastructure/logger/logrus"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/infrastructure/server"
+	chatapplication "github.com/mbobrovskyi/chat-management-go/internal/chat/api"
+	chatdomain "github.com/mbobrovskyi/chat-management-go/internal/chat/domain"
+	"github.com/mbobrovskyi/chat-management-go/internal/chat/repositories"
+	chatpubsub "github.com/mbobrovskyi/chat-management-go/internal/chat/subscription"
+	"github.com/mbobrovskyi/chat-management-go/internal/chat/websocket"
+	"github.com/mbobrovskyi/chat-management-go/internal/common/api"
+	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/connector"
+	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/publisher"
+	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/subscriber"
+	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/user"
+	"github.com/mbobrovskyi/chat-management-go/internal/infrastructure/configs"
+	"github.com/mbobrovskyi/chat-management-go/internal/infrastructure/database/redis"
+	"github.com/mbobrovskyi/chat-management-go/internal/infrastructure/logger/logrus"
+	"github.com/mbobrovskyi/chat-management-go/internal/infrastructure/server"
 	"golang.org/x/sync/errgroup"
 	"os"
 	"os/signal"
@@ -52,7 +54,7 @@ func main() {
 		log.Fatal(fmt.Errorf("error on connection to redis: %w", err))
 	}
 
-	chatPublisher := pubsub.NewPublisher(redisClient, cfg.ChatPubSubPrefix)
+	chatPublisher := publisher.NewPublisher(redisClient, cfg.ChatPubSubPrefix)
 
 	chatRepository := repositories.NewChatRepository()
 	messageRepository := repositories.NewMessageRepository()
@@ -64,15 +66,19 @@ func main() {
 	chatConnector := connector.NewConnector(chatEventHandler, connector.Config{Logger: log})
 
 	chatSubscriberHandler := chatpubsub.NewChatSubscriberHandler(messageService, chatConnector)
-	chatSubscriber := pubsub.NewSubscriber(log, redisClient, chatSubscriberHandler, cfg.ChatPubSubPrefix)
+	chatSubscriber := subscriber.NewSubscriber(log, redisClient, chatSubscriberHandler, cfg.ChatPubSubPrefix)
 
-	mainController := application.NewMainController(version)
-	chatController := chatapplication.NewChatController(chatService, chatConnector)
+	userContract := user.NewContract()
+
+	mainController := api.NewMainController(version)
+
+	authMiddleware := api.NewAuthMiddleware(userContract)
+	chatController := chatapplication.NewChatController(authMiddleware, chatService, chatConnector)
 
 	httpServer := server.NewHttpServer(
 		cfg,
 		log,
-		application.NewErrorHandler(cfg, log).Handle,
+		api.NewErrorHandler(cfg, log).Handle,
 		[]server.Controller{mainController, chatController},
 	)
 
@@ -84,18 +90,18 @@ func main() {
 			return err
 		}
 
-		log.Info("Connector gracefully stopped")
+		log.Info("Chat connector gracefully stopped")
 
 		return nil
 	})
 
 	eg.Go(func() error {
-		if err := chatSubscriber.Subscribe(ctx, chatdomain.GetAllPubSubEventTypes()); err != nil {
+		if err := chatSubscriber.Start(ctx, chatdomain.GetAllPubSubEventTypes()); err != nil {
 			log.Errorf("Error on running pubsub subscriber: %s", err.Error())
 			return err
 		}
 
-		log.Info("Connector gracefully stopped")
+		log.Info("Chat subscriber gracefully stopped")
 
 		return nil
 	})
@@ -106,7 +112,7 @@ func main() {
 			return err
 		}
 
-		log.Info("Server gracefully stopped")
+		log.Info("HTTP server gracefully stopped")
 
 		return nil
 	})

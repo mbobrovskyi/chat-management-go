@@ -1,10 +1,12 @@
-package application
+package api
 
 import (
+	"errors"
+	"fmt"
 	"github.com/gofiber/fiber/v2"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/common/domain/http_error"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/infrastructure/configs"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/infrastructure/logger"
+	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/http_error"
+	"github.com/mbobrovskyi/chat-management-go/internal/infrastructure/configs"
+	"github.com/mbobrovskyi/chat-management-go/internal/infrastructure/logger"
 	"maps"
 	"net/http"
 )
@@ -22,16 +24,18 @@ func (e *errorHandler) Handle(ctx *fiber.Ctx, err error) error {
 	var baseError http_error.HttpError
 
 	switch err.(type) {
-	case
-		*fiber.Error:
-		{
-			fiberErr := err.(*fiber.Error)
-			switch fiberErr.Code {
-			case http.StatusNotFound:
-				baseError = http_error.NewNotFoundError(err.Error())
-			}
+	case *fiber.Error:
+		var fiberErr *fiber.Error
+		errors.As(err, &fiberErr)
+		switch fiberErr.Code {
+		case http.StatusNotFound:
+			baseError = http_error.NewNotFoundError(err.Error())
 		}
+	case http_error.HttpError:
+		errors.As(err, &baseError)
 	}
+
+	fmt.Println()
 
 	errResponse := &ErrorResponse{
 		Timestamp: baseError.GetTimestamp().Format(configs.DateTimeFormat),

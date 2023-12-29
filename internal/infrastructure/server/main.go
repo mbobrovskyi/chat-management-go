@@ -7,8 +7,8 @@ import (
 	fiberCors "github.com/gofiber/fiber/v2/middleware/cors"
 	fiberLogger "github.com/gofiber/fiber/v2/middleware/logger"
 	fiberRecover "github.com/gofiber/fiber/v2/middleware/recover"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/infrastructure/configs"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/infrastructure/logger"
+	"github.com/mbobrovskyi/chat-management-go/internal/infrastructure/configs"
+	"github.com/mbobrovskyi/chat-management-go/internal/infrastructure/logger"
 	"time"
 )
 

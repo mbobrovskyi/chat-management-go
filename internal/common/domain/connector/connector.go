@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/common/domain/connection"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/common/domain/event"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/infrastructure/logger"
+	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/connection"
+	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/event"
+	"github.com/mbobrovskyi/chat-management-go/internal/infrastructure/logger"
 	"sync"
 	"time"
 )

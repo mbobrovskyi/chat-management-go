@@ -1,8 +1,6 @@
-module github.com/mbobrovskyi/ddd-chat-management-go
+module github.com/mbobrovskyi/chat-management-go
 
 go 1.21.2
-
-require github.com/stretchr/testify v1.8.4
 
 require (
 	github.com/andybalholm/brotli v1.0.5 // indirect

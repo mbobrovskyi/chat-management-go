@@ -1,7 +1,7 @@
 package connector
 
 import (
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/common/domain/connection"
+	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/connection"
 )
 
 type EventHandler interface {

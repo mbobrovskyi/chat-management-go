@@ -1,7 +1,7 @@
 package chat
 
 import (
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/chat/domain/message"
+	"github.com/mbobrovskyi/chat-management-go/internal/chat/domain/message"
 	"time"
 )
 

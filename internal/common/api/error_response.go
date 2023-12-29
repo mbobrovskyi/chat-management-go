@@ -1,4 +1,4 @@
-package application
+package api
 
 type ErrorResponse struct {
 	Timestamp string         `json:"timestamp,omitempty"`
