@@ -9,7 +9,7 @@ func toDTO(msg Message) common.MessageDTO {
 		Status:    msg.GetStatus().Uint8(),
 		ChatId:    msg.GetChatId(),
 		CreatedBy: msg.GetCreatedBy(),
-		CreatedAt: msg.CreatedAt(),
-		UpdatedAt: msg.UpdatedAt(),
+		CreatedAt: msg.GetCreatedAt(),
+		UpdatedAt: msg.GetUpdatedAt(),
 	}
 }

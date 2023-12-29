@@ -91,7 +91,7 @@ func (h *ChatWebsocketEventHandler) createMessage(conn connection.Connection, da
 
 	msg := message.CreateNew(request.Text, currentChatId.(uint64), conn.GetSession().GetUser().GetId())
 
-	if err := h.messageService.CreateMessage(context.Background(), msg); err != nil {
+	if err := h.messageService.Create(context.Background(), msg); err != nil {
 		return err
 	}
 

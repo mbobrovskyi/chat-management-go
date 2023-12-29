@@ -73,9 +73,8 @@ func main() {
 	userContract := user.NewContract()
 
 	mainController := api.NewMainController(version)
-
 	authMiddleware := api.NewAuthMiddleware(userContract)
-	chatController := chatapplication.NewChatController(authMiddleware, chatService, chatConnector)
+	chatController := chatapplication.NewChatController(authMiddleware, chatService, messageService, chatConnector)
 
 	httpServer := server.NewHttpServer(
 		cfg,

@@ -17,8 +17,8 @@ func (r *ChatRepository) getLastId() uint64 {
 	}).GetId()
 }
 
-func (r *ChatRepository) GetAll(ctx context.Context) ([]chat.Chat, error) {
-	return r.chats, nil
+func (r *ChatRepository) GetAll(ctx context.Context) ([]chat.Chat, uint64, error) {
+	return r.chats, uint64(len(r.chats)), nil
 }
 
 func (r *ChatRepository) GetById(ctx context.Context, id uint64) (chat.Chat, error) {

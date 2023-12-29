@@ -7,7 +7,8 @@ import (
 )
 
 type Service interface {
-	CreateMessage(ctx context.Context, message Message) error
+	GetAll(ctx context.Context) ([]Message, uint64, error)
+	Create(ctx context.Context, message Message) error
 }
 
 type messageService struct {
@@ -15,9 +16,17 @@ type messageService struct {
 	chatPublisher     publisher.Publisher
 }
 
-func (m *messageService) CreateMessage(ctx context.Context, message Message) error {
-	// TODO: Create on database
-	if err := m.chatPublisher.Publish(ctx, domain.CreateMessagePubSubEventType, toDTO(message)); err != nil {
+func (m *messageService) GetAll(ctx context.Context) ([]Message, uint64, error) {
+	return m.messageRepository.GetAll(ctx)
+}
+
+func (m *messageService) Create(ctx context.Context, msg Message) error {
+	newMsg, err := m.messageRepository.Save(ctx, msg)
+	if err != nil {
+		return err
+	}
+
+	if err := m.chatPublisher.Publish(ctx, domain.CreateMessagePubSubEventType, toDTO(newMsg)); err != nil {
 		return err
 	}
 	return nil

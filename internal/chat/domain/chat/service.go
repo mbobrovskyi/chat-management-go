@@ -5,8 +5,8 @@ import (
 )
 
 type Service interface {
-	GetAll(ctx context.Context) ([]Chat, error)
-	GetById(ctx context.Context, id uint64) ([]Chat, error)
+	GetAll(ctx context.Context) ([]Chat, uint64, error)
+	GetById(ctx context.Context, id uint64) (Chat, error)
 	Save(ctx context.Context, chat Chat) (Chat, error)
 	Delete(ctx context.Context, id uint64) error
 }
@@ -15,12 +15,12 @@ type chatService struct {
 	repository Repository
 }
 
-func (s *chatService) GetAll(ctx context.Context) ([]Chat, error) {
+func (s *chatService) GetAll(ctx context.Context) ([]Chat, uint64, error) {
 	return s.repository.GetAll(ctx)
 }
 
-func (s *chatService) GetById(ctx context.Context, id uint64) ([]Chat, error) {
-	return s.repository.GetAll(ctx)
+func (s *chatService) GetById(ctx context.Context, id uint64) (Chat, error) {
+	return s.repository.GetById(ctx, id)
 }
 
 func (s *chatService) Save(ctx context.Context, chat Chat) (Chat, error) {

@@ -10,8 +10,8 @@ type Message interface {
 	GetStatus() Status
 	GetChatId() uint64
 	GetCreatedBy() uint64
-	CreatedAt() time.Time
-	UpdatedAt() time.Time
+	GetCreatedAt() time.Time
+	GetUpdatedAt() time.Time
 }
 
 type message struct {
@@ -44,10 +44,10 @@ func (m *message) GetCreatedBy() uint64 {
 	return m.createdBy
 }
 
-func (m *message) CreatedAt() time.Time {
+func (m *message) GetCreatedAt() time.Time {
 	return m.createdAt
 }
 
-func (m *message) UpdatedAt() time.Time {
+func (m *message) GetUpdatedAt() time.Time {
 	return m.updatedAt
 }
