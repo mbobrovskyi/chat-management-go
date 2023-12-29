@@ -1,13 +1,9 @@
 package connection
 
 import (
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/common/domain/entity"
+	"github.com/google/uuid"
 	"github.com/mbobrovskyi/ddd-chat-management-go/internal/common/domain/session"
-	"sync"
 )
-
-var lastId uint64 = 0
-var lastIdMtx sync.Mutex
 
 type Conn interface {
 	WriteJSON(v any) error
@@ -16,14 +12,9 @@ type Conn interface {
 }
 
 func NewConnection(conn Conn, session session.Session) Connection {
-	lastIdMtx.Lock()
-	defer lastIdMtx.Unlock()
-
-	lastId++
-
 	return &connection{
-		AggregateRoot: entity.New[Connection](lastId),
-
+		uuid:        uuid.New(),
+		metadata:    make(map[string]any),
 		conn:        conn,
 		session:     session,
 		messageChan: make(chan []byte),

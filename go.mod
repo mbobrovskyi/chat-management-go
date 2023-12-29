@@ -12,6 +12,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/fasthttp/websocket v1.5.7 // indirect
+	github.com/gofiber/contrib/websocket v1.3.0 // indirect
 	github.com/gofiber/fiber/v2 v2.51.0 // indirect
 	github.com/google/uuid v1.5.0 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect

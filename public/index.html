@@ -1,0 +1,36 @@
+<html>
+<body>
+<div>
+    <div>
+        <textarea id="message"></textarea>
+    </div>
+    <div>
+        <button id="send">Send</button>
+    </div>
+</div>
+<script type="application/javascript">
+    const message = document.getElementById("message");
+    const send = document.getElementById("send");
+
+    const url = "ws://127.0.0.1:8080/chats/ws";
+    const socket = new WebSocket(url);
+    socket.onopen = function(e) {
+        console.log("WebSocket opened");
+    };
+
+    socket.onclose = function (e) {
+        console.log("WebSocket closed");
+    };
+
+    socket.onmessage = function (e) {
+        console.log("New message:", e.data);
+    };
+
+    send.onclick = function () {
+        const json = JSON.stringify({ type: 5, data: { text: message.value } })
+        console.log(json);
+        socket.send(json);
+    };
+</script>
+</body>
+</html>

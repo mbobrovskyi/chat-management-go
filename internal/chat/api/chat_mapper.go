@@ -1,4 +1,4 @@
-package application
+package api
 
 import (
 	"github.com/mbobrovskyi/ddd-chat-management-go/internal/chat/domain/chat"

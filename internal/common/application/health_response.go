@@ -1,4 +1,4 @@
-package data_contracts
+package application
 
 type HealthResponse struct {
 	Version string `json:"version"`

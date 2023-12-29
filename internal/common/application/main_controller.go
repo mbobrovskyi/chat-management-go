@@ -2,7 +2,6 @@ package application
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/common/application/data_contracts"
 	"github.com/mbobrovskyi/ddd-chat-management-go/internal/infrastructure/server"
 )
 
@@ -17,7 +16,7 @@ func (c *MainController) SetupRoutes(router fiber.Router) {
 }
 
 func (c *MainController) healthHandler(ctx *fiber.Ctx) error {
-	return ctx.JSON(data_contracts.HealthResponse{Version: c.version})
+	return ctx.JSON(HealthResponse{Version: c.version})
 }
 
 func NewMainController(version string) *MainController {

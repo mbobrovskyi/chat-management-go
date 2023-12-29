@@ -13,7 +13,7 @@ type Config struct {
 func NewConnector(
 	eventHandler EventHandler,
 	configs ...Config,
-) *connector {
+) Connector {
 	conn := &connector{
 		log:           logger.NewNopLogger(),
 		eventHandler:  eventHandler,

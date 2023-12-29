@@ -15,6 +15,8 @@ type Config struct {
 	RedisAddr     string `env:"REDIS_ADDR" envDefault:"localhost:6379"`
 	RedisPassword string `env:"REDIS_PASSWORD"`
 	RedisDb       int    `env:"REDIS_DB"`
+
+	ChatPubSubPrefix string `env:"CHAT_PUB_SUB_PREFIX" envDefault:"chat_"`
 }
 
 func NewConfig() (*Config, error) {

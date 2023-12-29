@@ -2,17 +2,14 @@ package http_error
 
 import (
 	"encoding/json"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/common/domain/value_object"
 	"runtime/debug"
 	"time"
 )
 
 type HttpError interface {
 	error
-	value_object.ValueObject[*httpError]
 
 	String() string
-
 	GetTimestamp() time.Time
 	GetCode() string
 	GetMessage() string
@@ -33,18 +30,6 @@ type httpError struct {
 
 func (e *httpError) Error() string {
 	return e.String()
-}
-
-func (e *httpError) Equals(other *httpError) bool {
-	if other == nil {
-		return false
-	}
-
-	if e == other {
-		return true
-	}
-
-	return e.GetCode() == other.GetCode()
 }
 
 func (e *httpError) String() string {

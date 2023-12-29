@@ -4,7 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/chat/domain/connection"
+	"github.com/mbobrovskyi/ddd-chat-management-go/internal/common/domain/connection"
+	"github.com/mbobrovskyi/ddd-chat-management-go/internal/common/domain/event"
 	"github.com/mbobrovskyi/ddd-chat-management-go/internal/infrastructure/logger"
 	"sync"
 	"time"
@@ -14,7 +15,7 @@ var AlreadyStartedError = errors.New("connector already started")
 
 type Connector interface {
 	Start(ctx context.Context) error
-	AddConnection(conn connection.Connection)
+	AddConnection(ctx context.Context, conn connection.Connection)
 	GetConnections() []connection.Connection
 }
 
@@ -76,10 +77,10 @@ func (c *connector) clean() {
 	c.connections = connections
 }
 
-func (c *connector) AddConnection(conn connection.Connection) {
-	c.log.Debugf("Added connection %d...", conn.GetId())
+func (c *connector) AddConnection(ctx context.Context, conn connection.Connection) {
+	c.log.Debugf("Added connection %s...", conn.GetUUID().String())
 
-	conn.Connect()
+	conn.Open()
 	c.addConnection(conn)
 	go c.listen(conn)
 }
@@ -94,6 +95,7 @@ func (c *connector) listen(conn connection.Connection) {
 	for {
 		select {
 		case <-conn.GetCloseChan():
+			c.log.Debugf("Connection %s closed on connector", conn.GetUUID())
 			return
 		case msg := <-conn.GetMessageChan():
 			c.onMessage(conn, msg)
@@ -102,16 +104,14 @@ func (c *connector) listen(conn connection.Connection) {
 }
 
 func (c *connector) onMessage(conn connection.Connection, data []byte) {
-	var rawEvent connection.Event
+	var rawEvent event.Event
 
 	if err := json.Unmarshal(data, &rawEvent); err != nil {
 		c.log.Debugf("Error on parse raw event: %s", err.Error())
 		return
 	}
 
-	c.log.Debugf("Got new event event_type=%d message=%s", rawEvent.GetType(), string(rawEvent.GetData()))
-
-	if err := c.eventHandler.Handle(conn, rawEvent); err != nil {
+	if err := c.eventHandler.Handle(conn, rawEvent.Type, rawEvent.Data); err != nil {
 		c.log.Error(err)
 	}
 }

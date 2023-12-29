@@ -1,22 +1,53 @@
 package message
 
 import (
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/common/domain/aggregate_root"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/common/domain/user"
 	"time"
 )
 
 type Message interface {
-	aggregate_root.AggregateRoot[Message]
+	GetId() uint64
+	GetText() string
+	GetStatus() Status
+	GetChatId() uint64
+	GetCreatedBy() uint64
+	CreatedAt() time.Time
+	UpdatedAt() time.Time
 }
 
 type message struct {
-	aggregate_root.AggregateRoot[Message]
+	id        uint64
+	text      string
+	status    Status
+	chatId    uint64
+	createdBy uint64
+	createdAt time.Time
+	updatedAt time.Time
+}
 
-	Text      string
-	Status    Status
-	ChatId    uint64
-	CreatedBy user.User
-	CreatedAt time.Time
-	UpdatedAt time.Time
+func (m *message) GetId() uint64 {
+	return m.id
+}
+
+func (m *message) GetText() string {
+	return m.text
+}
+
+func (m *message) GetStatus() Status {
+	return m.status
+}
+
+func (m *message) GetChatId() uint64 {
+	return m.chatId
+}
+
+func (m *message) GetCreatedBy() uint64 {
+	return m.createdBy
+}
+
+func (m *message) CreatedAt() time.Time {
+	return m.createdAt
+}
+
+func (m *message) UpdatedAt() time.Time {
+	return m.updatedAt
 }

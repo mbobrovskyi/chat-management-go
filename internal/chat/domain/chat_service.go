@@ -1,34 +1,37 @@
 package domain
 
-import "github.com/mbobrovskyi/ddd-chat-management-go/internal/chat/domain/chat"
+import (
+	"context"
+	"github.com/mbobrovskyi/ddd-chat-management-go/internal/chat/domain/chat"
+)
 
 type ChatService interface {
-	GetAll() ([]chat.Chat, error)
-	GetById(id uint64) ([]chat.Chat, error)
-	Save(chat chat.Chat) (chat.Chat, error)
-	Delete(id uint64) error
+	GetAll(ctx context.Context) ([]chat.Chat, error)
+	GetById(ctx context.Context, id uint64) ([]chat.Chat, error)
+	Save(ctx context.Context, chat chat.Chat) (chat.Chat, error)
+	Delete(ctx context.Context, id uint64) error
 }
 
 type chatService struct {
-	repository Repository
+	repository ChatRepository
 }
 
-func (s *chatService) GetAll() ([]chat.Chat, error) {
-	return s.repository.GetAll()
+func (s *chatService) GetAll(ctx context.Context) ([]chat.Chat, error) {
+	return s.repository.GetAll(ctx)
 }
 
-func (s *chatService) GetById(id uint64) ([]chat.Chat, error) {
-	return s.repository.GetAll()
+func (s *chatService) GetById(ctx context.Context, id uint64) ([]chat.Chat, error) {
+	return s.repository.GetAll(ctx)
 }
 
-func (s *chatService) Save(chat chat.Chat) (chat.Chat, error) {
-	return s.repository.Save(chat)
+func (s *chatService) Save(ctx context.Context, chat chat.Chat) (chat.Chat, error) {
+	return s.repository.Save(ctx, chat)
 }
 
-func (s *chatService) Delete(id uint64) error {
-	return s.repository.Delete(id)
+func (s *chatService) Delete(ctx context.Context, id uint64) error {
+	return s.repository.Delete(ctx, id)
 }
 
-func NewService(repository Repository) ChatService {
+func NewService(repository ChatRepository) ChatService {
 	return &chatService{repository: repository}
 }

@@ -2,13 +2,11 @@ package chat
 
 import (
 	"github.com/mbobrovskyi/ddd-chat-management-go/internal/chat/domain/message"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/common/domain/aggregate_root"
 	"time"
 )
 
 type Chat interface {
-	aggregate_root.AggregateRoot[Chat]
-
+	GetId() uint64
 	GetName() string
 	GetType() Type
 	GetImage() string
@@ -19,8 +17,7 @@ type Chat interface {
 }
 
 type chat struct {
-	aggregate_root.AggregateRoot[Chat]
-
+	Id         uint64
 	Name       string
 	Type       Type
 	Image      string
@@ -28,6 +25,10 @@ type chat struct {
 	CreatedBy  uint64
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
+}
+
+func (c *chat) GetId() uint64 {
+	return c.Id
 }
 
 func (c *chat) GetName() string {

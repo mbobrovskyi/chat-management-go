@@ -3,12 +3,16 @@ package main
 import (
 	"context"
 	"fmt"
-	chatapplication "github.com/mbobrovskyi/ddd-chat-management-go/internal/chat/application"
+	chatapplication "github.com/mbobrovskyi/ddd-chat-management-go/internal/chat/api"
 	chatdomain "github.com/mbobrovskyi/ddd-chat-management-go/internal/chat/domain"
 	"github.com/mbobrovskyi/ddd-chat-management-go/internal/chat/repositories"
+	chatpubsub "github.com/mbobrovskyi/ddd-chat-management-go/internal/chat/subscription"
+	"github.com/mbobrovskyi/ddd-chat-management-go/internal/chat/websocket"
 	"github.com/mbobrovskyi/ddd-chat-management-go/internal/common/application"
+	"github.com/mbobrovskyi/ddd-chat-management-go/internal/common/domain/connector"
+	"github.com/mbobrovskyi/ddd-chat-management-go/internal/common/domain/pubsub"
 	"github.com/mbobrovskyi/ddd-chat-management-go/internal/infrastructure/configs"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/infrastructure/connector"
+	"github.com/mbobrovskyi/ddd-chat-management-go/internal/infrastructure/database/redis"
 	"github.com/mbobrovskyi/ddd-chat-management-go/internal/infrastructure/logger/logrus"
 	"github.com/mbobrovskyi/ddd-chat-management-go/internal/infrastructure/server"
 	"golang.org/x/sync/errgroup"
@@ -42,18 +46,28 @@ func main() {
 	//if err != nil {
 	//	log.Fatal(fmt.Errorf("error on connection to postgres: %w", err))
 	//}
-	//
-	//redisClient, err := redis.NewRedis(ctx, cfg.RedisAddr, cfg.RedisPassword, cfg.RedisDb)
-	//if err != nil {
-	//	log.Fatal(fmt.Errorf("error on connection to redis: %w", err))
-	//}
+
+	redisClient, err := redis.NewRedis(ctx, cfg.RedisAddr, cfg.RedisPassword, cfg.RedisDb)
+	if err != nil {
+		log.Fatal(fmt.Errorf("error on connection to redis: %w", err))
+	}
+
+	chatPublisher := pubsub.NewPublisher(redisClient, cfg.ChatPubSubPrefix)
 
 	chatRepository := repositories.NewChatRepository()
+	messageRepository := repositories.NewMessageRepository()
+
 	chatService := chatdomain.NewService(chatRepository)
+	messageService := chatdomain.NewMessageService(messageRepository, chatPublisher)
+
+	chatEventHandler := websocket.NewMessageEventHandler(messageService)
+	chatConnector := connector.NewConnector(chatEventHandler, connector.Config{Logger: log})
+
+	chatSubscriberHandler := chatpubsub.NewChatSubscriberHandler(messageService, chatConnector)
+	chatSubscriber := pubsub.NewSubscriber(log, redisClient, chatSubscriberHandler, cfg.ChatPubSubPrefix)
 
 	mainController := application.NewMainController(version)
-	chatController := chatapplication.NewChatController(chatService)
-	chatEventHandler := chatapplication.NewChatEventHandler()
+	chatController := chatapplication.NewChatController(chatService, chatConnector)
 
 	httpServer := server.NewHttpServer(
 		cfg,
@@ -62,9 +76,29 @@ func main() {
 		[]server.Controller{mainController, chatController},
 	)
 
-	conn := connector.NewConnector(chatEventHandler, connector.Config{Logger: log})
-
 	eg, ctx := errgroup.WithContext(ctx)
+
+	eg.Go(func() error {
+		if err := chatConnector.Start(ctx); err != nil {
+			log.Errorf("Error on running connector: %s", err.Error())
+			return err
+		}
+
+		log.Info("Connector gracefully stopped")
+
+		return nil
+	})
+
+	eg.Go(func() error {
+		if err := chatSubscriber.Subscribe(ctx, chatdomain.GetAllPubSubEventTypes()); err != nil {
+			log.Errorf("Error on running pubsub subscriber: %s", err.Error())
+			return err
+		}
+
+		log.Info("Connector gracefully stopped")
+
+		return nil
+	})
 
 	eg.Go(func() error {
 		if err := httpServer.Start(ctx); err != nil {
@@ -73,17 +107,6 @@ func main() {
 		}
 
 		log.Info("Server gracefully stopped")
-
-		return nil
-	})
-
-	eg.Go(func() error {
-		if err := conn.Start(ctx); err != nil {
-			log.Errorf("Error on running connector: %s", err.Error())
-			return err
-		}
-
-		log.Info("Connector gracefully stopped")
 
 		return nil
 	})

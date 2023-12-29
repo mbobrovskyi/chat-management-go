@@ -1,37 +1,34 @@
 package message
 
 import (
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/common/domain/aggregate_root"
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/common/domain/user"
 	"strings"
 	"time"
 )
 
-func NewMessage(
+func Create(
 	id uint64,
 	text string,
 	status Status,
 	chatId uint64,
-	createdBy user.User,
+	createdBy uint64,
 	createdAt time.Time,
 	updatedAt time.Time,
-) (*message, error) {
-	text = strings.TrimSpace(text)
+) *message {
 	return &message{
-		AggregateRoot: aggregate_root.New[Message](id),
-		Text:          text,
-		Status:        status,
-		ChatId:        chatId,
-		CreatedBy:     createdBy,
-		CreatedAt:     createdAt,
-		UpdatedAt:     updatedAt,
-	}, nil
+		id:        id,
+		text:      strings.TrimSpace(text),
+		status:    status,
+		chatId:    chatId,
+		createdBy: createdBy,
+		createdAt: createdAt,
+		updatedAt: updatedAt,
+	}
 }
 
-func NewDefaultMessage(
+func CreateNew(
 	text string,
 	chatId uint64,
-	createdBy user.User,
-) (Message, error) {
-	return NewMessage(0, text, Draft, chatId, createdBy, time.Now(), time.Now())
+	createdBy uint64,
+) Message {
+	return Create(0, text, Draft, chatId, createdBy, time.Now(), time.Now())
 }

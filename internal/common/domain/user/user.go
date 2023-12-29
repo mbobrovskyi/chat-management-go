@@ -1,13 +1,11 @@
 package user
 
 import (
-	"github.com/mbobrovskyi/ddd-chat-management-go/internal/common/domain/entity"
 	"time"
 )
 
 type User interface {
-	entity.Entity[User]
-
+	GetId() uint64
 	GetEmail() string
 	GetFirstName() string
 	GetLastName() string
@@ -16,36 +14,39 @@ type User interface {
 }
 
 type user struct {
-	entity.Entity[User]
+	id        uint64
+	email     string
+	fistName  string
+	lastName  string
+	createdAt time.Time
+	updatedAt time.Time
+}
 
-	Email     string    `json:"email"`
-	FistName  string    `json:"fistName"`
-	LastName  string    `json:"lastName"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
+func (u *user) GetId() uint64 {
+	return u.id
 }
 
 func (u *user) GetEmail() string {
-	return u.Email
+	return u.email
 }
 
 func (u *user) GetFirstName() string {
-	return u.FistName
+	return u.fistName
 }
 
 func (u *user) GetLastName() string {
-	return u.LastName
+	return u.lastName
 }
 
 func (u *user) GetCreatedAt() time.Time {
-	return u.CreatedAt
+	return u.createdAt
 }
 
 func (u *user) GetUpdatedAt() time.Time {
-	return u.UpdatedAt
+	return u.updatedAt
 }
 
-func New(
+func NewUser(
 	id uint64,
 	email,
 	firstName,
@@ -54,11 +55,11 @@ func New(
 	updatedAt time.Time,
 ) User {
 	return &user{
-		Entity:    entity.New[User](id),
-		Email:     email,
-		FistName:  firstName,
-		LastName:  lastName,
-		CreatedAt: createdAt,
-		UpdatedAt: updatedAt,
+		id:        id,
+		email:     email,
+		fistName:  firstName,
+		lastName:  lastName,
+		createdAt: createdAt,
+		updatedAt: updatedAt,
 	}
 }

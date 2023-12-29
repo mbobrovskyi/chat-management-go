@@ -9,5 +9,5 @@ type Contract interface {
 type contract struct{}
 
 func (c *contract) GetCurrentUser(token string) User {
-	return New(1, "alice@gmail.com", "Alice", "Alison", time.Now(), time.Now())
+	return NewUser(1, "alice@gmail.com", "Alice", "Alison", time.Now(), time.Now())
 }
