@@ -1,4 +1,4 @@
-package api
+package http
 
 import (
 	"github.com/mbobrovskyi/chat-management-go/internal/chat/domain/chat"

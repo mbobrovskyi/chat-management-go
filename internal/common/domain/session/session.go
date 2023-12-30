@@ -2,28 +2,28 @@ package session
 
 import (
 	"github.com/google/uuid"
-	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/user"
+	"github.com/mbobrovskyi/chat-management-go/internal/user/domain"
 )
 
 type Session interface {
 	GetId() uuid.UUID
-	GetUser() user.User
+	GetUser() domain.User
 }
 
 type session struct {
 	Id   uuid.UUID
-	User user.User
+	User domain.User
 }
 
 func (s *session) GetId() uuid.UUID {
 	return s.Id
 }
 
-func (s *session) GetUser() user.User {
+func (s *session) GetUser() domain.User {
 	return s.User
 }
 
-func NewSession(user user.User) Session {
+func NewSession(user domain.User) Session {
 	return &session{
 		Id:   uuid.New(),
 		User: user,

@@ -1,4 +1,4 @@
-package subscription
+package pubsub
 
 import (
 	"encoding/json"
@@ -7,15 +7,15 @@ import (
 	"github.com/mbobrovskyi/chat-management-go/internal/chat/domain"
 	"github.com/mbobrovskyi/chat-management-go/internal/chat/domain/message"
 	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/connector"
-	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/subscriber"
+	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/pubsub/subscriber"
 )
 
-type ChatPubSubHandler struct {
+type ChatSubscriptionHandler struct {
 	messageService message.Service
 	chatConnector  connector.Connector
 }
 
-func (c ChatPubSubHandler) Handle(eventType uint8, data []byte) error {
+func (c ChatSubscriptionHandler) Handle(eventType uint8, data []byte) error {
 	fmt.Println("Handle:", eventType, string(data))
 
 	switch eventType {
@@ -26,7 +26,7 @@ func (c ChatPubSubHandler) Handle(eventType uint8, data []byte) error {
 	return nil
 }
 
-func (c *ChatPubSubHandler) createMessage(data []byte) error {
+func (c *ChatSubscriptionHandler) createMessage(data []byte) error {
 	var dto common.MessageDTO
 
 	if err := json.Unmarshal(data, &dto); err != nil {
@@ -46,7 +46,7 @@ func NewChatSubscriberHandler(
 	messageService message.Service,
 	chatConnector connector.Connector,
 ) subscriber.EventHandler {
-	return &ChatPubSubHandler{
+	return &ChatSubscriptionHandler{
 		messageService: messageService,
 		chatConnector:  chatConnector,
 	}

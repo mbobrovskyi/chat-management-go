@@ -3,7 +3,7 @@ package subscriber
 import (
 	"context"
 	"errors"
-	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/common"
+	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/pubsub/common"
 	"github.com/mbobrovskyi/chat-management-go/internal/infrastructure/logger"
 	"github.com/redis/go-redis/v9"
 	"github.com/samber/lo"

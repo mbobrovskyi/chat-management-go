@@ -4,8 +4,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/http_error"
 	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/session"
-	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/user"
 	"github.com/mbobrovskyi/chat-management-go/internal/infrastructure/server"
+	"github.com/mbobrovskyi/chat-management-go/internal/user/domain"
 	"strings"
 )
 
@@ -16,7 +16,7 @@ const (
 )
 
 type AuthMiddleware struct {
-	userContract user.Contract
+	userContract domain.Contract
 }
 
 func (m *AuthMiddleware) Handle(ctx *fiber.Ctx) error {
@@ -41,7 +41,7 @@ func (m *AuthMiddleware) Handle(ctx *fiber.Ctx) error {
 		return http_error.NewUnauthorizedError("invalid token")
 	}
 
-	user, err := m.userContract.GetCurrentUser(token)
+	user, err := m.userContract.GetCurrent(token)
 	if err != nil {
 		return err
 	}
@@ -82,7 +82,7 @@ func (m *AuthMiddleware) getTokenFromHeader(ctx *fiber.Ctx) (string, error) {
 	return authToken, nil
 }
 
-func NewAuthMiddleware(userContract user.Contract) server.Middleware {
+func NewAuthMiddleware(userContract domain.Contract) server.Middleware {
 	return &AuthMiddleware{
 		userContract: userContract,
 	}

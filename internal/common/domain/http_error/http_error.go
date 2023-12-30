@@ -1,7 +1,6 @@
 package http_error
 
 import (
-	"encoding/json"
 	"runtime/debug"
 	"time"
 )
@@ -9,7 +8,6 @@ import (
 type HttpError interface {
 	error
 
-	String() string
 	GetTimestamp() time.Time
 	GetCode() string
 	GetMessage() string
@@ -29,12 +27,7 @@ type httpError struct {
 }
 
 func (e *httpError) Error() string {
-	return e.String()
-}
-
-func (e *httpError) String() string {
-	data, _ := json.Marshal(e)
-	return string(data)
+	return e.Message
 }
 
 func (e *httpError) GetTimestamp() time.Time {

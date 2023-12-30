@@ -8,23 +8,27 @@ import (
 type Chat interface {
 	GetId() uint64
 	GetName() string
+	GetDescription() string
 	GetType() Type
 	GetImage() string
 	GetLastMessage() message.Message
+	GetMembers() []uint64
 	GetCreatedBy() uint64
 	GetCreatedAt() time.Time
 	GetUpdatedAt() time.Time
 }
 
 type chat struct {
-	Id         uint64
-	Name       string
-	Type       Type
-	Image      string
-	LasMessage message.Message
-	CreatedBy  uint64
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
+	Id          uint64
+	Name        string
+	Description string
+	Type        Type
+	Image       string
+	LasMessage  message.Message
+	Members     []uint64
+	CreatedBy   uint64
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }
 
 func (c *chat) GetId() uint64 {
@@ -33,6 +37,10 @@ func (c *chat) GetId() uint64 {
 
 func (c *chat) GetName() string {
 	return c.Name
+}
+
+func (c *chat) GetDescription() string {
+	return c.Description
 }
 
 func (c *chat) GetType() Type {
@@ -45,6 +53,10 @@ func (c *chat) GetImage() string {
 
 func (c *chat) GetLastMessage() message.Message {
 	return c.LasMessage
+}
+
+func (c *chat) GetMembers() []uint64 {
+	return c.Members
 }
 
 func (c *chat) GetCreatedBy() uint64 {

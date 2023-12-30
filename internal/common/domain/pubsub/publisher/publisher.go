@@ -3,8 +3,8 @@ package publisher
 import (
 	"context"
 	"encoding/json"
-	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/common"
 	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/http_error"
+	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/pubsub/common"
 	"github.com/redis/go-redis/v9"
 )
 

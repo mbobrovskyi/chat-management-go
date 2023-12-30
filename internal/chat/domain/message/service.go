@@ -3,7 +3,7 @@ package message
 import (
 	"context"
 	"github.com/mbobrovskyi/chat-management-go/internal/chat/domain"
-	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/publisher"
+	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/pubsub/publisher"
 )
 
 type Service interface {

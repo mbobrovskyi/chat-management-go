@@ -24,8 +24,8 @@ func (r *ChatRepository) GetAll(ctx context.Context) ([]chat.Chat, uint64, error
 func (r *ChatRepository) GetById(ctx context.Context, id uint64) (chat.Chat, error) {
 	for _, c := range r.chats {
 		if c.GetId() == id {
-			return chat.Create(c.GetId(), c.GetName(), c.GetType(), c.GetImage(), c.GetLastMessage(),
-				c.GetCreatedBy(), c.GetCreatedAt(), c.GetUpdatedAt()), nil
+			return chat.Create(c.GetId(), c.GetName(), c.GetDescription(), c.GetType(), c.GetImage(),
+				c.GetLastMessage(), c.GetMembers(), c.GetCreatedBy(), c.GetCreatedAt(), c.GetUpdatedAt()), nil
 		}
 	}
 
@@ -33,7 +33,16 @@ func (r *ChatRepository) GetById(ctx context.Context, id uint64) (chat.Chat, err
 }
 
 func (r *ChatRepository) Save(ctx context.Context, c chat.Chat) (chat.Chat, error) {
-	newChat := chat.Create(r.getLastId()+1, c.GetName(), c.GetType(), c.GetImage(), c.GetLastMessage(), c.GetCreatedBy(), c.GetCreatedAt(), c.GetUpdatedAt())
+	var newChat chat.Chat
+
+	if c.GetId() == 0 {
+		newChat = chat.Create(
+			r.getLastId()+1, c.GetName(), c.GetDescription(), c.GetType(), c.GetImage(), c.GetLastMessage(),
+			c.GetMembers(), c.GetCreatedBy(), c.GetCreatedAt(), c.GetUpdatedAt(),
+		)
+	} else {
+		newChat = c
+	}
 
 	r.chats = lo.Filter(r.chats, func(item chat.Chat, _ int) bool {
 		return item.GetId() != newChat.GetId()
@@ -52,7 +61,8 @@ func (r *ChatRepository) Delete(ctx context.Context, id uint64) error {
 
 func NewChatRepository() chat.Repository {
 	chats := make([]chat.Chat, 0)
-	chats = append(chats, chat.Create(1, "Chat 1", chat.Direct, "", nil, 1, time.Now(), time.Now()))
+	chats = append(chats, chat.Create(1, "Chat 1", "", chat.Direct, "", nil,
+		[]uint64{1, 2}, 1, time.Now(), time.Now()))
 
 	return &ChatRepository{
 		chats: chats,

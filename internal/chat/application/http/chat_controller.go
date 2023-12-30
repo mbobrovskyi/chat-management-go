@@ -1,4 +1,4 @@
-package api
+package http
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/mbobrovskyi/chat-management-go/internal/chat/domain/chat"
 	"github.com/mbobrovskyi/chat-management-go/internal/chat/domain/message"
-	"github.com/mbobrovskyi/chat-management-go/internal/common/api"
+	"github.com/mbobrovskyi/chat-management-go/internal/common/data_contracts"
 	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/connection"
 	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/connector"
 	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/session"
@@ -48,7 +48,7 @@ func (c *ChatController) getChats(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	return ctx.JSON(api.NewPage[ChatResponse](lo.Map(chats, func(item chat.Chat, _ int) ChatResponse {
+	return ctx.JSON(data_contracts.NewPage[ChatResponse](lo.Map(chats, func(item chat.Chat, _ int) ChatResponse {
 		return ChatToResponse(item)
 	}), count))
 }
@@ -63,12 +63,14 @@ func (c *ChatController) getChatMessages(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	return ctx.JSON(api.NewPage[MessageResponse](lo.Map(messages, func(item message.Message, _ int) MessageResponse {
+	return ctx.JSON(data_contracts.NewPage[MessageResponse](lo.Map(messages, func(item message.Message, _ int) MessageResponse {
 		return MessageToResponse(item)
 	}), count))
 }
 
 func (c *ChatController) createChat(ctx *fiber.Ctx) error {
+	//usersession := ctx.context().uservalue("session").(session.session)
+
 	return nil
 }
 

@@ -1,4 +1,4 @@
-package api
+package data_contracts
 
 type Page[T any] struct {
 	Items []T    `json:"items"`

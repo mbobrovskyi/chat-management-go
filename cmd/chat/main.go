@@ -3,22 +3,22 @@ package main
 import (
 	"context"
 	"fmt"
-	chatapplication "github.com/mbobrovskyi/chat-management-go/internal/chat/api"
+	"github.com/mbobrovskyi/chat-management-go/configs"
+	chatapplication "github.com/mbobrovskyi/chat-management-go/internal/chat/application/http"
+	chatpubsub "github.com/mbobrovskyi/chat-management-go/internal/chat/application/pubsub"
+	"github.com/mbobrovskyi/chat-management-go/internal/chat/application/websocket"
 	chatdomain "github.com/mbobrovskyi/chat-management-go/internal/chat/domain"
 	"github.com/mbobrovskyi/chat-management-go/internal/chat/domain/chat"
 	"github.com/mbobrovskyi/chat-management-go/internal/chat/domain/message"
-	"github.com/mbobrovskyi/chat-management-go/internal/chat/repositories"
-	chatpubsub "github.com/mbobrovskyi/chat-management-go/internal/chat/subscription"
-	"github.com/mbobrovskyi/chat-management-go/internal/chat/websocket"
+	repositories2 "github.com/mbobrovskyi/chat-management-go/internal/chat/infrastructure/repositories"
 	"github.com/mbobrovskyi/chat-management-go/internal/common/api"
 	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/connector"
-	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/publisher"
-	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/subscriber"
-	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/user"
-	"github.com/mbobrovskyi/chat-management-go/internal/infrastructure/configs"
+	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/pubsub/publisher"
+	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/pubsub/subscriber"
 	"github.com/mbobrovskyi/chat-management-go/internal/infrastructure/database/redis"
 	"github.com/mbobrovskyi/chat-management-go/internal/infrastructure/logger/logrus"
 	"github.com/mbobrovskyi/chat-management-go/internal/infrastructure/server"
+	"github.com/mbobrovskyi/chat-management-go/internal/user/contracts"
 	"golang.org/x/sync/errgroup"
 	"os"
 	"os/signal"
@@ -58,8 +58,8 @@ func main() {
 
 	chatPublisher := publisher.NewPublisher(redisClient, cfg.ChatPubSubPrefix)
 
-	chatRepository := repositories.NewChatRepository()
-	messageRepository := repositories.NewMessageRepository()
+	chatRepository := repositories2.NewChatRepository()
+	messageRepository := repositories2.NewMessageRepository()
 
 	chatService := chat.NewService(chatRepository)
 	messageService := message.NewMessageService(messageRepository, chatPublisher)
@@ -70,7 +70,7 @@ func main() {
 	chatSubscriberHandler := chatpubsub.NewChatSubscriberHandler(messageService, chatConnector)
 	chatSubscriber := subscriber.NewSubscriber(log, redisClient, chatSubscriberHandler, cfg.ChatPubSubPrefix)
 
-	userContract := user.NewContract()
+	userContract := contracts.NewUserContract()
 
 	mainController := api.NewMainController(version)
 	authMiddleware := api.NewAuthMiddleware(userContract)
