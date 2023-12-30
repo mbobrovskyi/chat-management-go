@@ -3,22 +3,20 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/mbobrovskyi/chat-management-go/configs"
-	chatapplication "github.com/mbobrovskyi/chat-management-go/internal/chat/application/http"
-	chatpubsub "github.com/mbobrovskyi/chat-management-go/internal/chat/application/pubsub"
-	"github.com/mbobrovskyi/chat-management-go/internal/chat/application/websocket"
-	chatdomain "github.com/mbobrovskyi/chat-management-go/internal/chat/domain"
-	"github.com/mbobrovskyi/chat-management-go/internal/chat/domain/chat"
-	"github.com/mbobrovskyi/chat-management-go/internal/chat/domain/message"
-	repositories2 "github.com/mbobrovskyi/chat-management-go/internal/chat/infrastructure/repositories"
-	"github.com/mbobrovskyi/chat-management-go/internal/common/api"
-	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/connector"
-	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/pubsub/publisher"
-	"github.com/mbobrovskyi/chat-management-go/internal/common/domain/pubsub/subscriber"
+	"github.com/mbobrovskyi/chat-management-go/internal/application/connector"
+	http2 "github.com/mbobrovskyi/chat-management-go/internal/application/http"
+	"github.com/mbobrovskyi/chat-management-go/internal/application/pubsub"
+	"github.com/mbobrovskyi/chat-management-go/internal/application/websocket"
+	"github.com/mbobrovskyi/chat-management-go/internal/domain"
+	service2 "github.com/mbobrovskyi/chat-management-go/internal/domain/services"
+	"github.com/mbobrovskyi/chat-management-go/internal/infrastructure/configs"
+	"github.com/mbobrovskyi/chat-management-go/internal/infrastructure/contracts"
 	"github.com/mbobrovskyi/chat-management-go/internal/infrastructure/database/redis"
 	"github.com/mbobrovskyi/chat-management-go/internal/infrastructure/logger/logrus"
-	"github.com/mbobrovskyi/chat-management-go/internal/infrastructure/server"
-	"github.com/mbobrovskyi/chat-management-go/internal/user/contracts"
+	"github.com/mbobrovskyi/chat-management-go/internal/infrastructure/pubsub/publisher"
+	"github.com/mbobrovskyi/chat-management-go/internal/infrastructure/pubsub/subscriber"
+	repositories2 "github.com/mbobrovskyi/chat-management-go/internal/infrastructure/repositories"
+	server2 "github.com/mbobrovskyi/chat-management-go/internal/infrastructure/server"
 	"golang.org/x/sync/errgroup"
 	"os"
 	"os/signal"
@@ -58,29 +56,29 @@ func main() {
 
 	chatPublisher := publisher.NewPublisher(redisClient, cfg.ChatPubSubPrefix)
 
-	chatRepository := repositories2.NewChatRepository()
-	messageRepository := repositories2.NewMessageRepository()
+	chatRepository := repositories2.NewMemoryChatRepository()
+	messageRepository := repositories2.NewMemoryMessageRepository()
 
-	chatService := chat.NewService(chatRepository)
-	messageService := message.NewMessageService(messageRepository, chatPublisher)
+	chatService := service2.NewChatService(chatRepository)
+	messageService := service2.NewMessageService(messageRepository, chatPublisher)
 
 	chatEventHandler := websocket.NewMessageEventHandler(messageService)
 	chatConnector := connector.NewConnector(chatEventHandler, connector.Config{Logger: log})
 
-	chatSubscriberHandler := chatpubsub.NewChatSubscriberHandler(messageService, chatConnector)
+	chatSubscriberHandler := pubsub.NewChatSubscriberHandler(messageService, chatConnector)
 	chatSubscriber := subscriber.NewSubscriber(log, redisClient, chatSubscriberHandler, cfg.ChatPubSubPrefix)
 
 	userContract := contracts.NewUserContract()
 
-	mainController := api.NewMainController(version)
-	authMiddleware := api.NewAuthMiddleware(userContract)
-	chatController := chatapplication.NewChatController(authMiddleware, chatService, messageService, chatConnector)
+	mainController := http2.NewMainController(version)
+	authMiddleware := http2.NewAuthMiddleware(userContract)
+	chatController := http2.NewChatController(authMiddleware, chatService, messageService, chatConnector)
 
-	httpServer := server.NewHttpServer(
+	httpServer := server2.NewHttpServer(
 		cfg,
 		log,
-		api.NewErrorHandler(cfg, log).Handle,
-		[]server.Controller{mainController, chatController},
+		http2.NewErrorHandler(cfg, log).Handle,
+		[]server2.Controller{mainController, chatController},
 	)
 
 	eg, ctx := errgroup.WithContext(ctx)
@@ -97,7 +95,7 @@ func main() {
 	})
 
 	eg.Go(func() error {
-		if err := chatSubscriber.Start(ctx, chatdomain.GetAllPubSubEventTypes()); err != nil {
+		if err := chatSubscriber.Start(ctx, domain.GetAllPubSubEventTypes()); err != nil {
 			log.Errorf("Error on running pubsub subscriber: %s", err.Error())
 			return err
 		}

@@ -1,4 +1,5 @@
 <html>
+<head></head>
 <body>
 <div>
     <div>
@@ -11,6 +12,8 @@
 <script type="application/javascript">
     const messageEl = document.getElementById("message");
     const sendEl = document.getElementById("send");
+
+    console.log()
 
     const token = "WGdb3O8j0mBxg24vaT9AnDMnn2aTel29BlhrTtPNozhKUkz3BnIEgvMIfcIZ66N5";
     const url = `ws://127.0.0.1:8081/chats/ws?token=${token}`;
@@ -32,8 +35,18 @@
     };
 
     sendEl.onclick = function () {
-        socket.send(JSON.stringify({ type: 5, data: { text: messageEl.value } }));
+        socket.send(JSON.stringify({ type: 5, data: { text: messageEl.value, uuid: guid() } }));
     };
+
+    function guid() {
+        function s4() {
+            return Math.floor((1 + Math.random()) * 0x10000)
+                .toString(16)
+                .substring(1);
+        }
+        return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+            s4() + '-' + s4() + s4() + s4();
+    }
 </script>
 </body>
 </html>
