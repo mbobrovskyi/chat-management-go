@@ -3,20 +3,26 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/mbobrovskyi/chat-management-go/internal/application/connector"
-	http2 "github.com/mbobrovskyi/chat-management-go/internal/application/http"
-	"github.com/mbobrovskyi/chat-management-go/internal/application/pubsub"
-	"github.com/mbobrovskyi/chat-management-go/internal/application/websocket"
-	"github.com/mbobrovskyi/chat-management-go/internal/domain"
-	service2 "github.com/mbobrovskyi/chat-management-go/internal/domain/services"
-	"github.com/mbobrovskyi/chat-management-go/internal/infrastructure/configs"
-	"github.com/mbobrovskyi/chat-management-go/internal/infrastructure/contracts"
-	"github.com/mbobrovskyi/chat-management-go/internal/infrastructure/database/redis"
-	"github.com/mbobrovskyi/chat-management-go/internal/infrastructure/logger/logrus"
-	"github.com/mbobrovskyi/chat-management-go/internal/infrastructure/pubsub/publisher"
-	"github.com/mbobrovskyi/chat-management-go/internal/infrastructure/pubsub/subscriber"
-	repositories2 "github.com/mbobrovskyi/chat-management-go/internal/infrastructure/repositories"
-	server2 "github.com/mbobrovskyi/chat-management-go/internal/infrastructure/server"
+	"github.com/mbobrovskyi/chat-management-go/config"
+	"github.com/mbobrovskyi/chat-management-go/internal/chat/application/http"
+	"github.com/mbobrovskyi/chat-management-go/internal/chat/application/pubsub"
+	"github.com/mbobrovskyi/chat-management-go/internal/chat/application/websocket"
+	"github.com/mbobrovskyi/chat-management-go/internal/chat/domain"
+	"github.com/mbobrovskyi/chat-management-go/internal/chat/domain/abstracts"
+	"github.com/mbobrovskyi/chat-management-go/internal/chat/domain/aggregates/connection"
+	"github.com/mbobrovskyi/chat-management-go/internal/chat/infrastructure/repositories"
+	"github.com/mbobrovskyi/chat-management-go/pkg/application/common"
+	commonhttp "github.com/mbobrovskyi/chat-management-go/pkg/application/http"
+	"github.com/mbobrovskyi/chat-management-go/pkg/infrastructure/database/redisfactory"
+	"github.com/mbobrovskyi/chat-management-go/pkg/infrastructure/httpserver"
+	"github.com/mbobrovskyi/chat-management-go/pkg/infrastructure/logger/logrusfactory"
+	"github.com/mbobrovskyi/chat-management-go/pkg/infrastructure/pubsub/event"
+	"github.com/mbobrovskyi/chat-management-go/pkg/infrastructure/pubsub/publisher"
+	"github.com/mbobrovskyi/chat-management-go/pkg/infrastructure/pubsub/subscriber"
+	"github.com/mbobrovskyi/chat-management-go/pkg/infrastructure/startable"
+	"github.com/mbobrovskyi/chat-management-go/pkg/infrastructure/userclient"
+	"github.com/mbobrovskyi/connector/pkg/connector"
+	"github.com/redis/go-redis/v9"
 	"golang.org/x/sync/errgroup"
 	"os"
 	"os/signal"
@@ -24,7 +30,7 @@ import (
 )
 
 func main() {
-	cfg, err := configs.NewConfig()
+	cfg, err := config.NewConfig()
 	if err != nil {
 		panic(fmt.Errorf("error on init config: %w", err))
 	}
@@ -36,7 +42,7 @@ func main() {
 
 	version := string(fileVersion)
 
-	log, err := logrus.NewLogger(cfg.LogLevel)
+	log, err := logrusfactory.NewLogger(cfg.LogLevel)
 	if err != nil {
 		panic(fmt.Errorf("error on init logger: %w", err))
 	}
@@ -44,41 +50,70 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
 	defer cancel()
 
-	//dbConn, err := postgres.NewPostgres(ctx, cfg.PostgresUri)
-	//if err != nil {
-	//	log.Fatal(fmt.Errorf("error on connection to postgres: %w", err))
-	//}
+	var redisClient *redis.Client
+	var chatPubSubChan chan event.Event
 
-	redisClient, err := redis.NewRedis(ctx, cfg.RedisAddr, cfg.RedisPassword, cfg.RedisDb)
-	if err != nil {
-		log.Fatal(fmt.Errorf("error on connection to redis: %w", err))
+	var chatPublisher publisher.Publisher
+
+	switch cfg.PubSubType {
+	case config.MemoryPubSub:
+		chatPubSubChan = make(chan event.Event)
+		defer close(chatPubSubChan)
+		chatPublisher = publisher.NewMemoryPublisher(chatPubSubChan)
+	case config.RedisPubSub:
+		redisClient, err = redisfactory.New(ctx, cfg.Redis.Addr, cfg.Redis.Password, cfg.Redis.Db)
+		if err != nil {
+			log.Fatal(fmt.Errorf("error on connection to redis: %w", err))
+		}
+		chatPublisher = publisher.NewRedisPublisher(redisClient, cfg.ChatPubSubPrefix)
+	default:
+		log.Fatal("invalid pub/sub type")
 	}
 
-	chatPublisher := publisher.NewPublisher(redisClient, cfg.ChatPubSubPrefix)
+	var chatRepository abstracts.ChatRepository
+	var messageRepository abstracts.MessageRepository
 
-	chatRepository := repositories2.NewMemoryChatRepository()
-	messageRepository := repositories2.NewMemoryMessageRepository()
+	switch cfg.DBType {
+	case config.MemoryDBType:
+		chatRepository = repositories.NewMemoryChatRepository()
+		messageRepository = repositories.NewMemoryMessageRepository()
+	default:
+		log.Fatal("invalid memory type")
+	}
 
-	chatService := service2.NewChatService(chatRepository)
-	messageService := service2.NewMessageService(messageRepository, chatPublisher)
+	baseErrorHandler := common.NewBaseErrorHandler(log)
 
-	chatEventHandler := websocket.NewMessageEventHandler(messageService)
-	chatConnector := connector.NewConnector(chatEventHandler, connector.Config{Logger: log})
+	chatConnectorHandler := websocket.NewChatConnectorEventHandler(chatRepository, messageRepository, chatPublisher)
+	connectorConfig := connector.Config{Logger: log, ErrorHandler: baseErrorHandler}
+	chatConnector := connector.NewT[*connection.Connection](chatConnectorHandler, connectorConfig)
 
-	chatSubscriberHandler := pubsub.NewChatSubscriberHandler(messageService, chatConnector)
-	chatSubscriber := subscriber.NewSubscriber(log, redisClient, chatSubscriberHandler, cfg.ChatPubSubPrefix)
+	chatSubscriberHandler := pubsub.NewChatSubscriberHandler(chatConnector)
 
-	userContract := contracts.NewUserContract()
+	var chatSubscriber startable.Startable
 
-	mainController := http2.NewMainController(version)
-	authMiddleware := http2.NewAuthMiddleware(userContract)
-	chatController := http2.NewChatController(authMiddleware, chatService, messageService, chatConnector)
+	switch cfg.PubSubType {
+	case config.MemoryPubSub:
+		chatSubscriber = subscriber.NewMemorySubscriber(
+			log, chatPubSubChan, domain.GetAllPubSubEventTypes(), chatSubscriberHandler)
+	case config.RedisPubSub:
+		chatSubscriber = subscriber.NewRedisSubscriber(
+			log, redisClient, cfg.ChatPubSubPrefix, domain.GetAllPubSubEventTypes(), chatSubscriberHandler)
+	default:
+		log.Fatal("invalid pub/sub type")
+	}
 
-	httpServer := server2.NewHttpServer(
-		cfg,
+	userContract := userclient.NewUserContract()
+
+	authMiddleware := commonhttp.NewAuthMiddleware(userContract)
+
+	mainController := commonhttp.NewMainController(version)
+	chatController := http.NewChatController(authMiddleware, chatRepository, messageRepository, chatConnector)
+
+	httpServer := httpserver.NewHttpServer(
+		&cfg.BaseConfig,
 		log,
-		http2.NewErrorHandler(cfg, log).Handle,
-		[]server2.Controller{mainController, chatController},
+		commonhttp.NewErrorHandler(cfg, log).Handle,
+		[]httpserver.Controller{mainController, chatController},
 	)
 
 	eg, ctx := errgroup.WithContext(ctx)
@@ -95,7 +130,7 @@ func main() {
 	})
 
 	eg.Go(func() error {
-		if err := chatSubscriber.Start(ctx, domain.GetAllPubSubEventTypes()); err != nil {
+		if err := chatSubscriber.Start(ctx); err != nil {
 			log.Errorf("Error on running pubsub subscriber: %s", err.Error())
 			return err
 		}

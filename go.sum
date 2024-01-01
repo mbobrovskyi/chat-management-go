@@ -32,6 +32,12 @@ github.com/mattn/go-isatty v0.0.20 h1:xfD0iDuEKnDkl03q4limB+vH+GxLEtL/jb4xVJSWWE
 github.com/mattn/go-isatty v0.0.20/go.mod h1:W+V8PltTTMOvKvAeJH7IuucS94S2C6jfK/D7dTCTo3Y=
 github.com/mattn/go-runewidth v0.0.15 h1:UNAjwbU9l54TA3KzvqLGxwWjHmMgBUVhBiTjelZgg3U=
 github.com/mattn/go-runewidth v0.0.15/go.mod h1:Jdepj2loyihRzMpdS35Xk/zdY8IAYHsh153qUoGf23w=
+github.com/mbobrovskyi/connector v0.0.0-20231231180328-ac9598d19d0f h1:ZRSuhMYw4d1Eh6Ma8Pe8ZXx78RN/glPW5nZRGJAUHEU=
+github.com/mbobrovskyi/connector v0.0.0-20231231180328-ac9598d19d0f/go.mod h1:fTAHJPHAK2JkzKOcruoUgOgnVN8zUwzQOhdZvzNEmmA=
+github.com/mbobrovskyi/connector v0.0.0-20240101131708-d971af5f4787 h1:fXf+5/AyxTXi2K+vh9dqX9AlyiX/ANq8eTWaim7s5f4=
+github.com/mbobrovskyi/connector v0.0.0-20240101131708-d971af5f4787/go.mod h1:fTAHJPHAK2JkzKOcruoUgOgnVN8zUwzQOhdZvzNEmmA=
+github.com/mbobrovskyi/connector v1.0.1 h1:nn7Y9i2Vo88+44QTxnd73q7GphaWABHEDO9l2TGEoBE=
+github.com/mbobrovskyi/connector v1.0.1/go.mod h1:fTAHJPHAK2JkzKOcruoUgOgnVN8zUwzQOhdZvzNEmmA=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/redis/go-redis/v9 v9.3.1 h1:KqdY8U+3X6z+iACvumCNxnoluToB+9Me+TvyFa21Mds=
